@@ -2,17 +2,19 @@
 #include <cstdlib>
 #include <thread>
 #include <mutex>
-#include <vector> //just in case, I think using vector is a good idea for storing threads
+#include <vector> // Used to store worker threads
 
-unsigned int COUNTER = 0;
+unsigned int COUNTER = 1;
 unsigned int n = 1; //max
 unsigned short int t = 1; //threads
-bool lock = false; //nice
+bool lock = false; // TODO: change to true by default; -nolock should disable synchronization
 
 //global so all worker threads can access the same histogram
 unsigned short histogram[1001] = {0}; //this trick automatically initializes all values to 0, same as the previous loop implementation
 
-// TODO: create mutex for COUNTER and histogram
+// Protect shared variables from simultaneous access by multiple threads
+std::mutex counterMutex;
+std::mutex histogramMutex;
 
 //could just be put into main
 void parseArguments(int argc, char *argv[]) {
@@ -24,6 +26,7 @@ void parseArguments(int argc, char *argv[]) {
 
     // TODO: check for optional -nolock argument
     // TODO: set lock true by default, false when -nolock is given
+    // IMPORTANT: currently lock is always false, so neither mutex is being used
     //if(argc >= 3) {lock = std::string(argv[3]) != "-nolock";}
 }
 
@@ -44,28 +47,46 @@ int stoppingTime(int num) {
 }
 
 void recordStoppingTime(int nextST) {
-    //add result to shared histogram
+    // Lock prevents threads from updating the same histogram entry simultaneously
+    if(lock) {
+        histogramMutex.lock();
+    }
 
-    // TODO: if locking is enabled through -nolock I think, protect this histogram update
-    // with the histogram mutex
-
+    // TODO: ensure nextST is within the histogram's 0-1000 range
     histogram[nextST]++;
+
+    if(lock) {
+        histogramMutex.unlock();
+    }
 }
 
+/* This function is run by each worker thread. It claims a number from the global counter, calculates its stopping time, and records the result in the histogram.
+*/
 void worker() {
-    //each thread will run this same function
+    while(true) {
+        int currentNumber;
 
-    while(COUNTER <= n) {
+        if(lock) {
+            counterMutex.lock();
+        }
 
-        // TODO: protect access to COUNTER with the counter mutex
-        // Each worker needs to safely claim ONE number and increment
-        // COUNTER so another worker does not claim the same number.
-        int currentNumber = COUNTER++;
+        // Check and claim a number while holding the same lock to prevent duplicate work
+        if(COUNTER > n) {
+            if(lock) {
+                counterMutex.unlock();
+            }
+            break;
+        }
 
-        //worker calculates the stopping time for the number it claimed
+        currentNumber = COUNTER++;
+
+        // Release the lock BEFORE computation so other threads can claim work.
+        // Holding it during stoppingTime() would prevent other threads from claiming numbers.
+        if(lock) {
+            counterMutex.unlock();
+        }
+
         int st = stoppingTime(currentNumber);
-
-        //worker records its result in the shared histogram
         recordStoppingTime(st);
     }
 }
@@ -75,24 +96,36 @@ int main(int argc, char *argv[]) {
 
     // TODO: start timer here
 
-    // TODO: instead of calling worker() directly,
-    // create t threads and have every thread run worker()
-    worker();
+    // Store all worker threads so main can wait for them
+    std::vector<std::thread> threads;
 
-    // TODO: join all worker threads here
-    // Main must wait until every worker is finished.
+    // Create t threads, all running the same worker function
+    for(int i = 0; i < t; i++) {
+    threads.push_back(std::thread(worker));
+    }
+
+    // Wait for every worker to finish before printing results
+    for(int i = 0; i < t; i++) {
+        threads[i].join();
+    }
 
     // TODO: stop timer here
 
     // TODO: print timing information to cerr N,T,time
 
+    // TODO: doc requires CSV output (stoppingTime,frequency) without a heading
     std::cout << "Stoping Time - Frequency\n";
 
     for(int i=0; i<=1000; ++i) {
+        // TODO: The doc requires printing all entries, including zero frequencies
         if(histogram[i] > 0) {
             std::cout << i << " - " << histogram[i] << std::endl;
         }
     }
+
+    // DOUBLY IMPORTANT: successful compilation does not guarantee correct synchronization.
+    // We should test locked and -nolock runs and compare their histogram outputs.
+    // Unlocked mode will intentionally allow for race conditions, so its results are unreliable.
 
     return 0;
 }
