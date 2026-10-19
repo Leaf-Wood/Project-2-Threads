@@ -3,56 +3,59 @@
 #include <thread>
 #include <mutex>
 #include <vector> // Used to store worker threads
+#include <string> 
 
 unsigned int COUNTER = 1;
 unsigned int n = 1; //max
 unsigned short int t = 1; //threads
-bool lock = false; // TODO: change to true by default; -nolock should disable synchronization
-
-//global so all worker threads can access the same histogram
-unsigned short histogram[1001] = {0}; //this trick automatically initializes all values to 0, same as the previous loop implementation
+bool lock = true; // False enables race conditions. 
+unsigned int histogram[1001] = {0}; // Initializes all values to 0
 
 // Protect shared variables from simultaneous access by multiple threads
 std::mutex counterMutex;
 std::mutex histogramMutex;
 
-//could just be put into main
 void parseArguments(int argc, char *argv[]) {
-    //get N, T, and need to add -nolock
-    if(argc >= 2) {
+    // Read N and T from the command line
+    if (argc >= 3) {
         n = atoi(argv[1]);
         t = atoi(argv[2]);
     }
 
-    // TODO: check for optional -nolock argument
-    // TODO: set lock true by default, false when -nolock is given
-    // IMPORTANT: currently lock is always false, so neither mutex is being used
-    //if(argc >= 3) {lock = std::string(argv[3]) != "-nolock";}
+    // Disables synchronization if -nolock is provided
+    if (argc == 4 && std::string(argv[3]) == "-nolock") {
+        lock = false;
+    }
 }
 
-int stoppingTime(int num) {
+// Collatz sequences can exceed 2.1 billion (32-bit int limit).
+// So 704,511 reaches 56.99 billion, therefore use bigger 64-bit long long. Try saying that fast three times over. 
+int stoppingTime(long long num) {
     int st = 0;
-    //std::cout << num;
     while(num > 1) {
         st++;
+
         if(num%2==0){
             num = num/2;
         } else {
             num = (num*3)+1;
         }
-        //std::cout << " > " << num;
     }
-    //std::cout << std::endl;
     return st;
 }
 
 void recordStoppingTime(int nextST) {
-    // Lock prevents threads from updating the same histogram entry simultaneously
+    // Ensure the stopping time is within the histogram's range
+    if (nextST < 0 || nextST > 1000) {
+        std::cerr << "Error: Stopping time out of range." << std::endl;
+        std::abort();
+    }
+
+    // Lock prevents threads from updating the same entry simultaneously
     if(lock) {
         histogramMutex.lock();
     }
 
-    // TODO: ensure nextST is within the histogram's 0-1000 range
     histogram[nextST]++;
 
     if(lock) {
@@ -113,19 +116,10 @@ int main(int argc, char *argv[]) {
 
     // TODO: print timing information to cerr N,T,time
 
-    // TODO: doc requires CSV output (stoppingTime,frequency) without a heading
-    std::cout << "Stoping Time - Frequency\n";
-
-    for(int i=0; i<=1000; ++i) {
-        // TODO: The doc requires printing all entries, including zero frequencies
-        if(histogram[i] > 0) {
-            std::cout << i << " - " << histogram[i] << std::endl;
-        }
+    // // Print each stopping time (0-1000) and its frequency in CSV format
+    for(int i = 0; i <= 1000; ++i) {
+        std::cout << i << "," << histogram[i] << std::endl;
     }
-
-    // DOUBLY IMPORTANT: successful compilation does not guarantee correct synchronization.
-    // We should test locked and -nolock runs and compare their histogram outputs.
-    // Unlocked mode will intentionally allow for race conditions, so its results are unreliable.
 
     return 0;
 }
