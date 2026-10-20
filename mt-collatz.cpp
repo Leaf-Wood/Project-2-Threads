@@ -27,52 +27,28 @@ int stoppingTime(long long num) {
     return st;
 }
 
-void recordStoppingTime(int nextST) {
-    // Ensure the stopping time is within the histogram's range
-    if (nextST < 0 || nextST > 1000) {
-        std::cerr << "Error: Stopping time out of range." << std::endl;
-        std::abort();
-    }
-
-    // Lock prevents threads from updating the same entry simultaneously
-    if(lock) {
-        histogramMutex.lock();
-    }
-
-    histogram[nextST]++;
-
-    if(lock) {
-        histogramMutex.unlock();
-    }
-}
-
-// This function is run by each worker thread. It claims a number from the global counter, calculates its stopping time, and records the result in the histogram.
+// Worker thread logic
 void worker() {
     while(true) {
-        int currentNumber;
+        unsigned int current = 0;
 
-        if(lock) {
-            counterMutex.lock();
+        // Claim the next number from the global COUNTER
+        if(lock) counterMutex.lock();
+        if(COUNTER <= n) {
+            current = COUNTER++;
         }
+        if(lock) counterMutex.unlock();
 
-        // Check and claim a number while holding the same lock to prevent duplicate work
-        if(COUNTER > n) {
-            if(lock) {
-                counterMutex.unlock();
-            }
-            break;
+        if(current == 0) break; // Exit loop when all work up to N is complete
+
+        int st = stoppingTime(current);
+
+        // Safely record stopping time in global histogram
+        if(lock) histogramMutex.lock();
+        if(st <= 1000) {
+            histogram[st]++;
         }
-
-        currentNumber = COUNTER++;
-
-        // Release the lock BEFORE computation so other threads can claim work.
-        // Holding it during stoppingTime() would prevent other threads from claiming numbers.
-        if(lock) {
-            counterMutex.unlock();
-        }
-
-        int st = stoppingTime(currentNumber);
-        recordStoppingTime(st);
+        if(lock) histogramMutex.unlock();
     }
 }
 
@@ -92,12 +68,11 @@ int main(int argc, char *argv[]) {
     struct timespec start, finish;
     clock_gettime(CLOCK_REALTIME, &start);
 
-    // Store all worker threads so main can wait for them
+    // Launch worker threads
     std::vector<std::thread> threads;
-
-    // Create t threads, all running the same worker function
+    threads.reserve(t);
     for(int i = 0; i < t; i++) {
-        threads.push_back(std::thread(worker));
+        threads.emplace_back(worker);
     }
 
     // Wait for every worker to finish before printing results
@@ -105,8 +80,10 @@ int main(int argc, char *argv[]) {
         threads[i].join();
     }
 
-    // Stop execution timer and calculate duration
+    // Stop execution timer
     clock_gettime(CLOCK_REALTIME, &finish);
+
+    // Calculate duration
     long seconds = finish.tv_sec - start.tv_sec;
     long nanoseconds = finish.tv_nsec - start.tv_nsec;
     if(nanoseconds < 0) {seconds--; nanoseconds += 1000000000L;}
@@ -116,9 +93,7 @@ int main(int argc, char *argv[]) {
 
     // Print each stopping time (0-1000) and its frequency in CSV format
     for(int i = 0; i <= 1000; ++i) {
-        if(histogram[i] != 0) {
-            std::cout << i << "," << histogram[i] << std::endl;
-        }
+        std::cout << i << "," << histogram[i] << "\n";
     }
 
     return 0;
