@@ -4,10 +4,11 @@
 #include <mutex>
 #include <vector> // Used to store worker threads
 #include <string> 
+#include <iomanip> // formating for timer
 
 unsigned int COUNTER = 1;
-unsigned int n = 1; //max
-unsigned short int t = 1; //threads
+unsigned int n = 1;
+unsigned short int t = 1; // Num of threads
 bool lock = true; // False enables race conditions. 
 unsigned int histogram[1001] = {0}; // Initializes all values to 0
 
@@ -97,14 +98,16 @@ void worker() {
 int main(int argc, char *argv[]) {
     parseArguments(argc, argv);
 
-    // TODO: start timer here
+    // start timer here
+    struct timespec start, finish;
+    clock_gettime(CLOCK_REALTIME, &start);
 
     // Store all worker threads so main can wait for them
     std::vector<std::thread> threads;
 
     // Create t threads, all running the same worker function
     for(int i = 0; i < t; i++) {
-    threads.push_back(std::thread(worker));
+        threads.push_back(std::thread(worker));
     }
 
     // Wait for every worker to finish before printing results
@@ -112,14 +115,21 @@ int main(int argc, char *argv[]) {
         threads[i].join();
     }
 
-    // TODO: stop timer here
+    // stop timer here
+    clock_gettime(CLOCK_REALTIME, &finish);
+    long seconds = finish.tv_sec - start.tv_sec;
+    long nanoseconds = finish.tv_nsec - start.tv_nsec;
+    if(nanoseconds < 0) {seconds--; nanoseconds += 1000000000L;}
 
-    // TODO: print timing information to cerr N,T,time
+    //  print timing information to cerr N,T,time
+    std::cerr << n << "," << t << "," << seconds << "." << std::setfill('0') << std::setw(9) << nanoseconds << std::endl;
 
-    // // Print each stopping time (0-1000) and its frequency in CSV format
+    /* // Print each stopping time (0-1000) and its frequency in CSV format
     for(int i = 0; i <= 1000; ++i) {
-        std::cout << i << "," << histogram[i] << std::endl;
-    }
+        if(histogram[i]!=0) {
+            std::cout << i << "," << histogram[i] << std::endl;
+        }
+    }*/
 
     return 0;
 }

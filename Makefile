@@ -6,7 +6,7 @@ TARGET = mt-collatz
 all: $(TARGET)
 
 $(TARGET): main.cpp
-	$(CXX) $(CXXFLAGS) main.cpp -o $(TARGET)
+	$(CXX) $(CXXFLAGS) main.cpp -o $(TARGET) -pthread
 
 clean:
 	rm -f $(TARGET)
