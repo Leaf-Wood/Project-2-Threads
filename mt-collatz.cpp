@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
     if(nanoseconds < 0) {seconds--; nanoseconds += 1000000000L;}
 
     // Print timing info to cerr N,T,time
-    std::cerr << n << "," << t << "," << seconds << "." << std::setfill('0') << std::setw(9) << nanoseconds << "\n";
+    std::cerr << n << "," << t << "," << seconds << "." << std::setfill('0') << std::setw(9) << nanoseconds << "," << lock << "\n";
 
     // Print each stopping time (0-1000) and its frequency in CSV format
     for(int i = 0; i <= 1000; ++i) {
