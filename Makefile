@@ -8,7 +8,14 @@ all: $(TARGET)
 $(TARGET): mt-collatz.cpp
 	$(CXX) $(CXXFLAGS) mt-collatz.cpp -o $(TARGET) -pthread
 
-clean:
-	rm -f $(TARGET)
+experiment:
+	bash run-experiments.sh
 
-.PHONY: all clean
+spreadsheet:
+	powershell.exe -NoProfile -ExecutionPolicy Bypass -File make-excel.ps1
+
+clean:
+	rm -f $(TARGET) $(TARGET).exe
+	rm -rf results/windows results/linux
+
+.PHONY: all experiment spreadsheet clean
