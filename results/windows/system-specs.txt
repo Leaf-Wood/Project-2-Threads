@@ -1,0 +1,28 @@
+2026-10-20T22:30:24-05:00
+Experiment: N=10000000, T=1..8, 10 trials per mode
+
+
+Name                      : AMD Ryzen 5 7640HS w/ Radeon 760M Graphics     
+NumberOfCores             : 6
+NumberOfLogicalProcessors : 12
+
+
+
+
+
+TotalPhysicalMemory : 16309932032
+
+
+
+
+
+Caption : Microsoft Windows 11 Home
+Version : 10.0.26200
+
+
+
+g++.exe (Rev3, Built by MSYS2 project) 16.2.0
+Copyright (C) 2026 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+

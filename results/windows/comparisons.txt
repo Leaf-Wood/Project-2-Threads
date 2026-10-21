@@ -1,0 +1,6 @@
+hist1.txt and hist2.txt differ.
+hist1.txt and hist3.txt match.
+Separate check timings (N,T,seconds):
+500000,1,0.050046700
+500000,5,0.016497400
+500000,5,0.048268000

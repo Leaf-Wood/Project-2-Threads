@@ -83,6 +83,7 @@ try {
     # Keep the machine details recorded for this run.
     $system = $book.Worksheets.Add()
     $system.Name = 'System'
+    $system.Columns.Item(1).NumberFormat = '@' # Keep headings as text
     $system.Cells.Item(1, 1).Value2 = 'System specifications for this run'
     $row = 3
     foreach ($line in Get-Content -LiteralPath (Join-Path $folder 'system-specs.txt')) {

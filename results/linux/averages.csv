@@ -1,0 +1,17 @@
+T,Mode,AverageSeconds,Trials
+1,Locked,2.452484,10
+1,NoLock,2.281624,10
+2,Locked,2.547616,10
+2,NoLock,1.971080,10
+3,Locked,2.901125,10
+3,NoLock,1.353476,10
+4,Locked,3.117999,10
+4,NoLock,1.752289,10
+5,Locked,3.648851,10
+5,NoLock,1.084103,10
+6,Locked,3.596254,10
+6,NoLock,3.842159,10
+7,Locked,3.654139,10
+7,NoLock,5.788327,10
+8,Locked,3.716632,10
+8,NoLock,6.402129,10

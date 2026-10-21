@@ -1,0 +1,12 @@
+2026-10-20T22:37:23-05:00
+Experiment: N=10000000, T=1..8, 10 trials per mode
+=== SYSTEM SPECIFICATIONS ===
+Host Name: cs-ssh.argo.uwf.edu
+CPU Model: Intel(R) Xeon(R) Gold 6338N CPU @ 2.20GHz
+Sockets:   48
+Cores/Socket: 1
+Total Physical Cores: 48
+Available Logical Processors: 48
+Total Memory: 125Gi
+Operating System: Linux 4.18.0-553.168.1.el8_10.x86_64
+Compiler: g++ (GCC) 8.5.0 20210514 (Red Hat 8.5.0-29)
